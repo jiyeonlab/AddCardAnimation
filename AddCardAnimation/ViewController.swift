@@ -9,7 +9,7 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
     var game = setCardGame()
     var clickCount = 0
     
@@ -29,7 +29,15 @@ class ViewController: UIViewController {
     private var tapSubview: Array<UIView> = [UIView]()
     private var moreAdd = false
     private var rememberTapCardTag = 0
-
+    
+    private var viewingCardList = [Int]()
+    
+    // 차례대로 애니메이션 적용을 위해서 타이머가 필요함.
+    private var timer = Timer()
+    private var startTimer = false
+    
+    private var cardNumber = 0
+    
     lazy var grid = Grid(layout: .aspectRatio(0.9), frame: cardViewSpace.bounds)
     
     func addSubViewToGrid() {
@@ -49,7 +57,7 @@ class ViewController: UIViewController {
             if let card = grid[index]{
                 let gamingCard = game.viewCards[index]
                 // 서브뷰로 CardView 클래스 인스턴스를 만들어서 넣음.
-                let subView = CardView(frame: card.insetBy(dx: 4.0, dy: 4.0))
+                let subView = CardView(rect: card.insetBy(dx: 4.0, dy: 4.0))
                 
                 let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapedCard(_:)))
                 
@@ -69,11 +77,59 @@ class ViewController: UIViewController {
                     subView.layer.borderWidth = 2
                 }
                 
+                if !viewingCardList.contains(subView.tag){
+                    viewingCardList.append(subView.tag)
+                }
+                
                 viewCardCount += 1
                 identifierTag += 1
             }
         }
         
+        print("viewingCardList = \(viewingCardList)")
+        cardFlipTimer()
+        
+    }
+    
+    private func cardFlipTimer() {
+        
+        if cardNumber < 11 {
+            print("timer ok")
+            timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(newCardsSettingAnimation), userInfo: nil, repeats: true)
+        }
+    }
+    
+    // 새로운 카드를 나타낼 때, 뒤집는 애니메이션 함수.
+    @objc private func newCardsSettingAnimation(timer: Timer) {
+        print("func \(cardNumber)")
+        
+        if let currentAnimatedCard = cardViewSpace.subviews[cardNumber] as? CardView, !currentAnimatedCard.isFaceUp{
+            UIViewPropertyAnimator.runningPropertyAnimator(
+                withDuration: 0.2,
+                delay: 0.1,
+                options: [],
+                animations: {
+                    currentAnimatedCard.transform = CGAffineTransform.identity.scaledBy(x: 0.9, y: 0.9)
+                },
+                completion: { finished in
+                    UIView.transition(
+                        with: currentAnimatedCard,
+                        duration: 0.2,
+                        options: [.transitionFlipFromLeft],
+                        animations: { currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp }
+                    )
+                    
+                }
+            )
+        }
+        
+        cardNumber += 1
+        
+        if cardNumber == 12 {
+            print("stop please!")
+            timer.invalidate()
+            cardNumber = 0
+        }
     }
     
     @objc func tapedCard(_ recognizer: UITapGestureRecognizer){
@@ -85,7 +141,7 @@ class ViewController: UIViewController {
             if let rememberTapCard = recognizer.view {
                 rememberTapCardTag = rememberTapCard.tag
             }
-
+            
             if game.deckHasMoreCard == false && waitLastHighlight {
                 for index in 0..<3{
                     cardViewSpace.subviews[clickCardNumbers[index]].isHidden = true
@@ -159,7 +215,7 @@ class ViewController: UIViewController {
             }
         }
     }
-   
+    
     @IBAction func tapMoreCard(_ sender: UITapGestureRecognizer) {
         switch sender.state {
         case .ended:

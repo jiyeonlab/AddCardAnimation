@@ -9,15 +9,26 @@
 import UIKit
 
 class CardView: UIView {
-
+    
+    var isFaceUp: Bool = false { didSet {setNeedsDisplay(); setNeedsLayout()}}
     var symbol = Card.Symbol.squiggle { didSet {setNeedsDisplay()} }
     var color = Card.Color.red { didSet {setNeedsDisplay()} }
     var count = Card.Count.one.rawValue { didSet {setNeedsDisplay()} }
     var opacity = Card.Opacity.solid { didSet {setNeedsDisplay()} }
-
-    override func draw(_ rect: CGRect) {
-        // Drawing code
+    
+    init(rect: CGRect) {
+        super.init(frame: rect)
         
+        // 카드의 처음은 뒷면으로 설정하기 위함.
+        backgroundColor = #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1)
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+    
+    
+    override func draw(_ rect: CGRect) {
         super.draw(rect)
         
         // set white background
@@ -27,18 +38,19 @@ class CardView: UIView {
             return
         }
 
-        Color.cardViewBGColor.setFill()
-        graphicsContext.fill(bounds)
-        
-        let roundedRect = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius)
-        roundedRect.addClip()
-        
-        UIColor.white.setFill()
-        roundedRect.fill()
-        
-        // 카드에 들어갈 각종 property를 매칭하고, 그려주기.
-        drawSymbol()
-        
+        if isFaceUp {
+            Color.cardViewBGColor.setFill()
+            graphicsContext.fill(bounds)
+
+            let roundedRect = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius)
+            roundedRect.addClip()
+
+            UIColor.white.setFill()
+            roundedRect.fill()
+
+            // 카드에 들어갈 각종 property를 매칭하고, 그려주기.
+            drawSymbol()
+        }
     }
     
     private func drawSymbol() {
@@ -67,7 +79,6 @@ class CardView: UIView {
     }
     
     private func drawSquiggle(number count: Int) -> UIBezierPath {
-    
         
         let squigglePath = UIBezierPath()
         let allSquiggleWidth = ( symbolWidth * CGFloat(count + 1) )
@@ -92,7 +103,7 @@ class CardView: UIView {
             }else if i == 1{
                 startPoint = drawingBoxOriginX + symbolWidth + symbolWidth + betweenMargin + betweenMargin
             }
-
+            
         }
         
         return squigglePath
@@ -219,7 +230,7 @@ class CardView: UIView {
         
         stripePath.stroke()
     }
-
+    
 }
 
 extension CardView {
