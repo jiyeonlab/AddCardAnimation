@@ -54,13 +54,11 @@ class ViewController: UIViewController {
         identifierTag = 0
         
         for index in 0..<grid.cellCount {
+            
             if let card = grid[index]{
                 let gamingCard = game.viewCards[index]
-                // 서브뷰로 CardView 클래스 인스턴스를 만들어서 넣음.
                 let subView = CardView(rect: card.insetBy(dx: 4.0, dy: 4.0))
-                
                 let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapedCard(_:)))
-                
                 subView.addGestureRecognizer(tapRecognizer)
                 subView.tag = identifierTag
                 
@@ -69,8 +67,14 @@ class ViewController: UIViewController {
                 subView.count = gamingCard.suitCount.rawValue
                 subView.opacity = gamingCard.suitOpacity
                 
+                // 기존에 그린적이 있는 카드일 떄.
+                if viewingCardList.contains(identifierTag) {
+                    subView.isFaceUp = true
+                    subView.alpha = 1
+                }
                 cardViewSpace.addSubview(subView)
                 
+                // 아직 3장 선택 다 안했는데, more card 눌렀을 떄 선택 중인 카드의 highlight 유지하기 위함.
                 if clickCount < 4 && clickCardNumbers.contains(subView.tag)
                 {
                     subView.layer.borderColor = UIColor.yellow.cgColor
@@ -88,48 +92,86 @@ class ViewController: UIViewController {
         
         print("viewingCardList = \(viewingCardList)")
         cardFlipTimer()
+        //flyDeckToCard()
         
     }
     
+    // 카드를 순서대로 애니메이션화하기 위해 추가한 timer.
     private func cardFlipTimer() {
         
-        if cardNumber < 11 {
+        moreCardButton.isEnabled = false
+        
+        if cardNumber < game.viewCards.count{
             print("timer ok")
-            timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(newCardsSettingAnimation), userInfo: nil, repeats: true)
+            timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(flyDeckToCard), userInfo: nil, repeats: true)
         }
     }
     
     // 새로운 카드를 나타낼 때, 뒤집는 애니메이션 함수.
-    @objc private func newCardsSettingAnimation(timer: Timer) {
-        print("func \(cardNumber)")
+    @objc private func flipCardAnimation() {
         
         if let currentAnimatedCard = cardViewSpace.subviews[cardNumber] as? CardView, !currentAnimatedCard.isFaceUp{
             UIViewPropertyAnimator.runningPropertyAnimator(
                 withDuration: 0.2,
-                delay: 0.1,
+                delay: 0.0,
                 options: [],
                 animations: {
-                    currentAnimatedCard.transform = CGAffineTransform.identity.scaledBy(x: 0.9, y: 0.9)
-                },
+                    currentAnimatedCard.alpha = 1
+            },
                 completion: { finished in
                     UIView.transition(
                         with: currentAnimatedCard,
-                        duration: 0.2,
+                        duration: 0.3,
                         options: [.transitionFlipFromLeft],
-                        animations: { currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp }
+                        animations: {
+                            //currentAnimatedCard.alpha = 1;
+                            currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp
+                            
+                    }
                     )
                     
-                }
+            }
             )
         }
         
         cardNumber += 1
         
-        if cardNumber == 12 {
-            print("stop please!")
+        if cardNumber == game.viewCards.count {
+            print("stop timer please!")
+            moreCardButton.isEnabled = true
             timer.invalidate()
-            cardNumber = 0
         }
+        
+        
+    }
+    
+    // 카드가 Deck에서 자기 자리로 날아가는 애니메이션.
+    @objc private func flyDeckToCard(timer: Timer) {
+        
+        let cardFromDeck = UIView(frame: CGRect(origin: moreCardButton.frame.origin, size: moreCardButton.bounds.size))
+        cardFromDeck.backgroundColor = #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1)
+        view.addSubview(cardFromDeck)
+        
+        
+        UIViewPropertyAnimator.runningPropertyAnimator(
+            withDuration: 0.4,
+            delay: 0.0,
+            options: [.curveLinear],
+            animations: {
+                
+                cardFromDeck.bounds.size = self.cardViewSpace.subviews[self.cardNumber].bounds.size
+                cardFromDeck.frame.origin.x = self.cardViewSpace.frame.origin.x + self.cardViewSpace.subviews[self.cardNumber].frame.origin.x;
+                cardFromDeck.frame.origin.y = self.cardViewSpace.frame.origin.y + self.cardViewSpace.subviews[self.cardNumber].frame.origin.y;
+                
+            },
+            completion: { current in
+                cardFromDeck.removeFromSuperview()
+                self.flipCardAnimation()
+                
+            }
+        )
+        
+        
     }
     
     @objc func tapedCard(_ recognizer: UITapGestureRecognizer){
@@ -142,6 +184,7 @@ class ViewController: UIViewController {
                 rememberTapCardTag = rememberTapCard.tag
             }
             
+            // 더이상에 deck이 카드가 없을 땐, 매칭된 자리의 카드를 hidden함.
             if game.deckHasMoreCard == false && waitLastHighlight {
                 for index in 0..<3{
                     cardViewSpace.subviews[clickCardNumbers[index]].isHidden = true
@@ -186,7 +229,17 @@ class ViewController: UIViewController {
                     
                     for index in 0..<3{
                         cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.green.cgColor
+                        //                        let tagIndex = cardViewSpace.subviews[clickCardNumbers[index]].tag
+                        //                        print("tagIndex = \(tagIndex)")
+                        //                        if let inListIndex = viewingCardList.firstIndex(of: tagIndex){
+                        //                            viewingCardList.remove(at: inListIndex)
+                        //                        }
+                        
                     }
+                    
+                    //                    clickCount = 0
+                    //                    clickCardNumbers.removeAll()
+                    //                    addSubViewToGrid()
                     
                     if !game.deckHasMoreCard {
                         waitLastHighlight = true

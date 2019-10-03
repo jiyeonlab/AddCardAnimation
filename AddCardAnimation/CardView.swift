@@ -21,6 +21,7 @@ class CardView: UIView {
         
         // 카드의 처음은 뒷면으로 설정하기 위함.
         backgroundColor = #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1)
+        alpha = 0.0
     }
     
     required init?(coder: NSCoder) {
