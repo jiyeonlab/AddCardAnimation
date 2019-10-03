@@ -99,7 +99,8 @@ class ViewController: UIViewController {
     // 카드를 순서대로 애니메이션화하기 위해 추가한 timer.
     private func cardFlipTimer() {
         
-        moreCardButton.isEnabled = false
+        cardEnable()
+        
         
         if cardNumber < game.viewCards.count{
             print("timer ok")
@@ -138,7 +139,7 @@ class ViewController: UIViewController {
         
         if cardNumber == game.viewCards.count {
             print("stop timer please!")
-            moreCardButton.isEnabled = true
+            cardEnable()
             timer.invalidate()
         }
         
@@ -175,29 +176,7 @@ class ViewController: UIViewController {
     }
     
     @objc func tapedCard(_ recognizer: UITapGestureRecognizer){
-        // 선택한 3장의 카드가 매칭 여부를 판단하자 마자 border effect가 사라지는 것이 아니라, 그 다음번 카드를 선택시에 border effect를 끄기 위한 조건문.
-        if clickCount == 4 {
-            
-            // 이 if 안에서 addCardViewToGrid()를 호출하기 때문에, 지금 tap한 카드의 정보를 잃어버린다.
-            // 이 다음 if에서 현재 tap 카드의 border effect를 주기 위해 카드 정보를 기억함.
-            if let rememberTapCard = recognizer.view {
-                rememberTapCardTag = rememberTapCard.tag
-            }
-            
-            // 더이상에 deck이 카드가 없을 땐, 매칭된 자리의 카드를 hidden함.
-            if game.deckHasMoreCard == false && waitLastHighlight {
-                for index in 0..<3{
-                    cardViewSpace.subviews[clickCardNumbers[index]].isHidden = true
-                }
-                
-                waitLastHighlight = false
-            }
-            
-            offCardHighlight()
-            addSubViewToGrid()
-            clickCount = 0
-            clickCardNumbers.removeAll()
-        }
+        
         
         // 총 3장의 카드를 선택할 때까지만 들어가는 코드.
         if let currentTapCard = recognizer.view, !clickCardNumbers.contains(currentTapCard.tag), clickCount < 3{
@@ -229,26 +208,33 @@ class ViewController: UIViewController {
                     
                     for index in 0..<3{
                         cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.green.cgColor
-                        //                        let tagIndex = cardViewSpace.subviews[clickCardNumbers[index]].tag
-                        //                        print("tagIndex = \(tagIndex)")
-                        //                        if let inListIndex = viewingCardList.firstIndex(of: tagIndex){
-                        //                            viewingCardList.remove(at: inListIndex)
-                        //                        }
+                        
+                        // MARK: 나중에 여기서 cardFlyAnimation 함수 호출해야함.
                         
                     }
                     
-                    //                    clickCount = 0
-                    //                    clickCardNumbers.removeAll()
-                    //                    addSubViewToGrid()
-                    
-                    if !game.deckHasMoreCard {
-                        waitLastHighlight = true
+                    // 더이상에 deck이 카드가 없을 땐, 매칭된 자리의 카드를 hidden함.
+                    if game.deckHasMoreCard == false && waitLastHighlight {
+                        for index in 0..<3{
+                            cardViewSpace.subviews[clickCardNumbers[index]].isHidden = true
+                        }
+                        
+                        waitLastHighlight = false
                     }
+                    
+                    clickCount = 0
+                    timer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(offCardHighlight), userInfo: nil, repeats: false)
+                    addSubViewToGrid()
+                    
                     
                 }else{
                     for index in 0..<3{
                         cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.red.cgColor
                     }
+                    
+                    // 일정시간이 지나면 카드의 red highlight가 꺼지게 하기 위함.
+                    clickCount = 0
+                    timer = Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: #selector(offCardHighlight), userInfo: nil, repeats: false)
                 }
                 
             }
@@ -301,10 +287,22 @@ class ViewController: UIViewController {
         addSubViewToGrid()
     }
     
-    func offCardHighlight() {
-        for index in game.viewCards.indices{
-            cardViewSpace.subviews[index].layer.borderColor = UIColor.clear.cgColor
-            cardViewSpace.subviews[index].layer.borderWidth = 0
+    @objc func offCardHighlight(timer: Timer) {
+        
+        clickCardNumbers.forEach {
+            cardViewSpace.subviews[$0].layer.borderColor = UIColor.clear.cgColor
+            cardViewSpace.subviews[$0].layer.borderWidth = 0
+        }
+        clickCardNumbers.removeAll()
+    }
+    
+    // 각종 애니메이션 실행 시, 각종 버튼을 선택을 불가하게 하거나, 다시 선택할 수 있게 해주는 함수.
+    func cardEnable() {
+        
+        moreCardButton.isEnabled = !moreCardButton.isEnabled
+        
+        cardViewSpace.subviews.forEach {
+            $0.isUserInteractionEnabled = !$0.isUserInteractionEnabled
         }
     }
     
