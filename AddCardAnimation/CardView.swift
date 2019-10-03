@@ -11,6 +11,7 @@ import UIKit
 class CardView: UIView {
     
     var isFaceUp: Bool = false { didSet {setNeedsDisplay(); setNeedsLayout()}}
+    var afterMatch: Bool = false { didSet {setNeedsDisplay(); setNeedsLayout()}}
     var symbol = Card.Symbol.squiggle { didSet {setNeedsDisplay()} }
     var color = Card.Color.red { didSet {setNeedsDisplay()} }
     var count = Card.Count.one.rawValue { didSet {setNeedsDisplay()} }

@@ -37,11 +37,11 @@ class ViewController: UIViewController {
     private var startTimer = false
     
     private var cardNumber = 0
-    
+    private var matchingFlag = false
     lazy var grid = Grid(layout: .aspectRatio(0.9), frame: cardViewSpace.bounds)
     
     func addSubViewToGrid() {
-        
+        print("클릭한 카드 = \(clickCardNumbers)")
         // grid의 cellFrames 배열에 cardViewSpace를 추가.
         grid.frame = cardViewSpace.bounds
         grid.cellCount = game.viewCards.count
@@ -50,7 +50,6 @@ class ViewController: UIViewController {
             cardView.removeFromSuperview()
         }
         
-        viewCardCount = 0
         identifierTag = 0
         
         for index in 0..<grid.cellCount {
@@ -72,6 +71,17 @@ class ViewController: UIViewController {
                     subView.isFaceUp = true
                     subView.alpha = 1
                 }
+                
+                // 매칭된 카드 자리는 flyDeckToCard()와 flipCardAnimation()을 따로 적용하기 위해서 걸러냄.
+                if clickCardNumbers.count == 3, clickCardNumbers.contains(identifierTag){
+                    subView.isFaceUp = false
+                    //subView.afterMatch = true
+                    subView.alpha = 0
+                    
+//                    if let wherePos = clickCardNumbers.firstIndex(of: identifierTag){
+//                        clickCardNumbers.remove(at: wherePos)
+//                    }
+                }
                 cardViewSpace.addSubview(subView)
                 
                 // 아직 3장 선택 다 안했는데, more card 눌렀을 떄 선택 중인 카드의 highlight 유지하기 위함.
@@ -85,7 +95,6 @@ class ViewController: UIViewController {
                     viewingCardList.append(subView.tag)
                 }
                 
-                viewCardCount += 1
                 identifierTag += 1
             }
         }
@@ -99,11 +108,15 @@ class ViewController: UIViewController {
     // 카드를 순서대로 애니메이션화하기 위해 추가한 timer.
     private func cardFlipTimer() {
         
-        cardEnable()
+        //cardEnable()
         
         
         if cardNumber < game.viewCards.count{
             print("timer ok")
+            timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(flyDeckToCard), userInfo: nil, repeats: true)
+        }
+        else if cardNumber == game.viewCards.count {
+            print("!!")
             timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(flyDeckToCard), userInfo: nil, repeats: true)
         }
     }
@@ -111,37 +124,74 @@ class ViewController: UIViewController {
     // 새로운 카드를 나타낼 때, 뒤집는 애니메이션 함수.
     @objc private func flipCardAnimation() {
         
-        if let currentAnimatedCard = cardViewSpace.subviews[cardNumber] as? CardView, !currentAnimatedCard.isFaceUp{
-            UIViewPropertyAnimator.runningPropertyAnimator(
-                withDuration: 0.2,
-                delay: 0.0,
-                options: [],
-                animations: {
-                    currentAnimatedCard.alpha = 1
-            },
-                completion: { finished in
-                    UIView.transition(
-                        with: currentAnimatedCard,
-                        duration: 0.3,
-                        options: [.transitionFlipFromLeft],
-                        animations: {
-                            //currentAnimatedCard.alpha = 1;
-                            currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp
-                            
+        if matchingFlag {
+            print("매칭된 카드만 뒤집어야함")
+            
+            let tempValue = clickCardNumbers[0]
+            if let currentAnimatedCard = cardViewSpace.subviews[tempValue] as? CardView, !currentAnimatedCard.isFaceUp{
+                UIViewPropertyAnimator.runningPropertyAnimator(
+                    withDuration: 0.2,
+                    delay: 0.0,
+                    options: [],
+                    animations: {
+                        currentAnimatedCard.alpha = 1
+                    },
+                    completion: { finished in
+                        UIView.transition(
+                            with: currentAnimatedCard,
+                            duration: 0.3,
+                            options: [.transitionFlipFromLeft],
+                            animations: {
+                                //currentAnimatedCard.alpha = 1;
+                                currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp
+                                
+                            }
+                        )
+                        
                     }
-                    )
-                    
+                )
+                
+                clickCardNumbers.removeFirst()
             }
-            )
+            
+            if clickCardNumbers.count == 0 {
+                matchingFlag = false
+                timer.invalidate()
+            }
+        }else {
+            if let currentAnimatedCard = cardViewSpace.subviews[cardNumber] as? CardView, !currentAnimatedCard.isFaceUp{
+                UIViewPropertyAnimator.runningPropertyAnimator(
+                    withDuration: 0.2,
+                    delay: 0.0,
+                    options: [],
+                    animations: {
+                        currentAnimatedCard.alpha = 1
+                    },
+                    completion: { finished in
+                        UIView.transition(
+                            with: currentAnimatedCard,
+                            duration: 0.3,
+                            options: [.transitionFlipFromLeft],
+                            animations: {
+                                //currentAnimatedCard.alpha = 1;
+                                currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp
+                                
+                            }
+                        )
+                        
+                    }
+                )
+                
+                cardNumber += 1
+            }
+            
+            if cardNumber == game.viewCards.count {
+                print("stop timer please!")
+                //cardEnable()
+                timer.invalidate()
+            }
         }
         
-        cardNumber += 1
-        
-        if cardNumber == game.viewCards.count {
-            print("stop timer please!")
-            cardEnable()
-            timer.invalidate()
-        }
         
         
     }
@@ -160,10 +210,19 @@ class ViewController: UIViewController {
             options: [.curveLinear],
             animations: {
                 
-                cardFromDeck.bounds.size = self.cardViewSpace.subviews[self.cardNumber].bounds.size
-                cardFromDeck.frame.origin.x = self.cardViewSpace.frame.origin.x + self.cardViewSpace.subviews[self.cardNumber].frame.origin.x;
-                cardFromDeck.frame.origin.y = self.cardViewSpace.frame.origin.y + self.cardViewSpace.subviews[self.cardNumber].frame.origin.y;
-                
+                if self.matchingFlag {
+                    
+                    cardFromDeck.bounds.size = self.cardViewSpace.subviews[self.clickCardNumbers[0]].bounds.size
+                    cardFromDeck.frame.origin.x = self.cardViewSpace.frame.origin.x + self.cardViewSpace.subviews[self.clickCardNumbers[0]].frame.origin.x;
+                    cardFromDeck.frame.origin.y = self.cardViewSpace.frame.origin.y + self.cardViewSpace.subviews[self.clickCardNumbers[0]].frame.origin.y;
+                    
+                    //self.clickCardNumbers.removeFirst()
+                    
+                }else {
+                    cardFromDeck.bounds.size = self.cardViewSpace.subviews[self.cardNumber].bounds.size
+                    cardFromDeck.frame.origin.x = self.cardViewSpace.frame.origin.x + self.cardViewSpace.subviews[self.cardNumber].frame.origin.x;
+                    cardFromDeck.frame.origin.y = self.cardViewSpace.frame.origin.y + self.cardViewSpace.subviews[self.cardNumber].frame.origin.y;
+                }
             },
             completion: { current in
                 cardFromDeck.removeFromSuperview()
@@ -206,6 +265,8 @@ class ViewController: UIViewController {
                 
                 if matchingBool {
                     
+                    matchingFlag = true
+                    
                     for index in 0..<3{
                         cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.green.cgColor
                         
@@ -235,6 +296,7 @@ class ViewController: UIViewController {
                     // 일정시간이 지나면 카드의 red highlight가 꺼지게 하기 위함.
                     clickCount = 0
                     timer = Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: #selector(offCardHighlight), userInfo: nil, repeats: false)
+                    //clickCardNumbers.removeAll()
                 }
                 
             }
@@ -259,7 +321,7 @@ class ViewController: UIViewController {
         switch sender.state {
         case .ended:
             
-            if game.viewCards.count < viewCardCount+1 {
+            if game.viewCards.count < cardViewSpace.subviews.count+1 {
                 if clickCount == 4 {
                     for index in 0..<3{
                         cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.clear.cgColor
@@ -293,7 +355,11 @@ class ViewController: UIViewController {
             cardViewSpace.subviews[$0].layer.borderColor = UIColor.clear.cgColor
             cardViewSpace.subviews[$0].layer.borderWidth = 0
         }
-        clickCardNumbers.removeAll()
+        
+        if !matchingFlag {
+            clickCardNumbers.removeAll()
+        }
+        
     }
     
     // 각종 애니메이션 실행 시, 각종 버튼을 선택을 불가하게 하거나, 다시 선택할 수 있게 해주는 함수.
