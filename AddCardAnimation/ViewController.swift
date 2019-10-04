@@ -16,32 +16,28 @@ class ViewController: UIViewController {
     // 사용자가 클릭한 카드를 넣어둘 배열.
     var clickCardNumbers: Array<Int> = [Int]()
     
-    var moreCardOK = true
+    //var moreCardOK = true
     var waitLastHighlight = false
     
     @IBOutlet weak var moreCardButton: UIButton!
     
-    
     @IBOutlet weak var cardViewSpace: UIView!
     
-    private var viewCardCount = 0
     private var identifierTag = 0
-    private var tapSubview: Array<UIView> = [UIView]()
-    private var moreAdd = false
-    private var rememberTapCardTag = 0
     
     private var viewingCardList = [Int]()
     
     // 차례대로 애니메이션 적용을 위해서 타이머가 필요함.
     private var timer = Timer()
-    private var startTimer = false
     
     private var cardNumber = 0
     private var matchingFlag = false
+    
     lazy var grid = Grid(layout: .aspectRatio(0.9), frame: cardViewSpace.bounds)
     
+    // game model에서 카드의 속성을 받아, grid의 위치에 카드를 배치하기 위한 함수.
     func addSubViewToGrid() {
-        print("클릭한 카드 = \(clickCardNumbers)")
+        
         // grid의 cellFrames 배열에 cardViewSpace를 추가.
         grid.frame = cardViewSpace.bounds
         grid.cellCount = game.viewCards.count
@@ -52,6 +48,7 @@ class ViewController: UIViewController {
         
         identifierTag = 0
         
+        // 새롭게 다시 그림.
         for index in 0..<grid.cellCount {
             
             if let card = grid[index]{
@@ -66,7 +63,7 @@ class ViewController: UIViewController {
                 subView.count = gamingCard.suitCount.rawValue
                 subView.opacity = gamingCard.suitOpacity
                 
-                // 기존에 그린적이 있는 카드일 떄.
+                // 기존에 그린적이 있는 카드일 떄. 뒤집는 효과 안주기 위해서.
                 if viewingCardList.contains(identifierTag) {
                     subView.isFaceUp = true
                     subView.alpha = 1
@@ -75,13 +72,9 @@ class ViewController: UIViewController {
                 // 매칭된 카드 자리는 flyDeckToCard()와 flipCardAnimation()을 따로 적용하기 위해서 걸러냄.
                 if clickCardNumbers.count == 3, clickCardNumbers.contains(identifierTag){
                     subView.isFaceUp = false
-                    //subView.afterMatch = true
                     subView.alpha = 0
-                    
-//                    if let wherePos = clickCardNumbers.firstIndex(of: identifierTag){
-//                        clickCardNumbers.remove(at: wherePos)
-//                    }
                 }
+                
                 cardViewSpace.addSubview(subView)
                 
                 // 아직 3장 선택 다 안했는데, more card 눌렀을 떄 선택 중인 카드의 highlight 유지하기 위함.
@@ -99,24 +92,20 @@ class ViewController: UIViewController {
             }
         }
         
-        print("viewingCardList = \(viewingCardList)")
         cardFlipTimer()
-        //flyDeckToCard()
         
     }
     
     // 카드를 순서대로 애니메이션화하기 위해 추가한 timer.
     private func cardFlipTimer() {
         
-        //cardEnable()
-        
+        cardEnable()
         
         if cardNumber < game.viewCards.count{
-            print("timer ok")
+            // 초기 12장 카드를 뿌릴 때 & deal 눌러서 3장 더 뿌릴 때 수행.
             timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(flyDeckToCard), userInfo: nil, repeats: true)
-        }
-        else if cardNumber == game.viewCards.count {
-            print("!!")
+        }else if cardNumber == game.viewCards.count {
+            // 3장이 매칭되어 없어지고, 그 자리에 새로운 카드를 뿌릴 때 수행.
             timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(flyDeckToCard), userInfo: nil, repeats: true)
         }
     }
@@ -124,11 +113,10 @@ class ViewController: UIViewController {
     // 새로운 카드를 나타낼 때, 뒤집는 애니메이션 함수.
     @objc private func flipCardAnimation() {
         
+        // 매칭된 카드만 뒤집으려 할 때.
         if matchingFlag {
-            print("매칭된 카드만 뒤집어야함")
-            
-            let tempValue = clickCardNumbers[0]
-            if let currentAnimatedCard = cardViewSpace.subviews[tempValue] as? CardView, !currentAnimatedCard.isFaceUp{
+            let wantToFlipCardNumber = clickCardNumbers.first!
+            if let currentAnimatedCard = cardViewSpace.subviews[wantToFlipCardNumber] as? CardView, !currentAnimatedCard.isFaceUp{
                 UIViewPropertyAnimator.runningPropertyAnimator(
                     withDuration: 0.2,
                     delay: 0.0,
@@ -156,6 +144,7 @@ class ViewController: UIViewController {
             
             if clickCardNumbers.count == 0 {
                 matchingFlag = false
+                cardEnable()
                 timer.invalidate()
             }
         }else {
@@ -186,19 +175,17 @@ class ViewController: UIViewController {
             }
             
             if cardNumber == game.viewCards.count {
-                print("stop timer please!")
-                //cardEnable()
+                cardEnable()
                 timer.invalidate()
             }
-        }
-        
-        
+        }//else
         
     }
     
     // 카드가 Deck에서 자기 자리로 날아가는 애니메이션.
     @objc private func flyDeckToCard(timer: Timer) {
         
+        // deal에서 각 카드 위치로 날아갈 UIView를 생성하고, subview로 추가.
         let cardFromDeck = UIView(frame: CGRect(origin: moreCardButton.frame.origin, size: moreCardButton.bounds.size))
         cardFromDeck.backgroundColor = #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1)
         view.addSubview(cardFromDeck)
@@ -211,13 +198,9 @@ class ViewController: UIViewController {
             animations: {
                 
                 if self.matchingFlag {
-                    
                     cardFromDeck.bounds.size = self.cardViewSpace.subviews[self.clickCardNumbers[0]].bounds.size
                     cardFromDeck.frame.origin.x = self.cardViewSpace.frame.origin.x + self.cardViewSpace.subviews[self.clickCardNumbers[0]].frame.origin.x;
                     cardFromDeck.frame.origin.y = self.cardViewSpace.frame.origin.y + self.cardViewSpace.subviews[self.clickCardNumbers[0]].frame.origin.y;
-                    
-                    //self.clickCardNumbers.removeFirst()
-                    
                 }else {
                     cardFromDeck.bounds.size = self.cardViewSpace.subviews[self.cardNumber].bounds.size
                     cardFromDeck.frame.origin.x = self.cardViewSpace.frame.origin.x + self.cardViewSpace.subviews[self.cardNumber].frame.origin.x;
@@ -241,15 +224,7 @@ class ViewController: UIViewController {
         if let currentTapCard = recognizer.view, !clickCardNumbers.contains(currentTapCard.tag), clickCount < 3{
             
             // 매칭시킬 카드는 3장이므로, clickCard가 3장이 채워질 때까지만 유효한 코드.
-            
-            if rememberTapCardTag != 0 {
-                //currentTapCard = taped.view[rememberTapCardTag]
-                cardViewSpace.subviews[rememberTapCardTag].layer.borderColor = UIColor.yellow.cgColor
-                cardViewSpace.subviews[rememberTapCardTag].layer.borderWidth = 2
-                
-                rememberTapCardTag = 0
-            }
-            
+                        
             clickCount += 1
             
             clickCardNumbers.append(currentTapCard.tag)
@@ -266,14 +241,15 @@ class ViewController: UIViewController {
                 if matchingBool {
                     
                     matchingFlag = true
+                    clickCardNumbers.sort()
                     
-                    for index in 0..<3{
-                        cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.green.cgColor
+                    clickCardNumbers.forEach {
+                        cardViewSpace.subviews[$0].layer.borderColor = UIColor.green.cgColor
                         
                         // MARK: 나중에 여기서 cardFlyAnimation 함수 호출해야함.
-                        
                     }
                     
+                    // MARK: 여기서 안앖어지고, 매칭된 카드가 다시 깔림
                     // 더이상에 deck이 카드가 없을 땐, 매칭된 자리의 카드를 hidden함.
                     if game.deckHasMoreCard == false && waitLastHighlight {
                         for index in 0..<3{
@@ -289,14 +265,13 @@ class ViewController: UIViewController {
                     
                     
                 }else{
-                    for index in 0..<3{
-                        cardViewSpace.subviews[clickCardNumbers[index]].layer.borderColor = UIColor.red.cgColor
+                    clickCardNumbers.forEach {
+                        cardViewSpace.subviews[$0].layer.borderColor = UIColor.red.cgColor
                     }
                     
                     // 일정시간이 지나면 카드의 red highlight가 꺼지게 하기 위함.
                     clickCount = 0
                     timer = Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: #selector(offCardHighlight), userInfo: nil, repeats: false)
-                    //clickCardNumbers.removeAll()
                 }
                 
             }
