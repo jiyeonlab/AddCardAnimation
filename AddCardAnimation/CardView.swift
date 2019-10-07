@@ -16,6 +16,7 @@ class CardView: UIView {
     var color = Card.Color.red { didSet {setNeedsDisplay()} }
     var count = Card.Count.one.rawValue { didSet {setNeedsDisplay()} }
     var opacity = Card.Opacity.solid { didSet {setNeedsDisplay()} }
+    var isCopy = false
     
     init(rect: CGRect) {
         super.init(frame: rect)
@@ -29,6 +30,26 @@ class CardView: UIView {
         super.init(coder: coder)
     }
     
+    // 매칭된 카드 3장의 CardView를 복사해서, view에 서브뷰로 추가하기 위함.
+    func tempCardDraw(draw tempCard: CardView) -> CardView {
+        
+        let copyCard = CardView(rect: tempCard.bounds)
+        copyCard.symbol = tempCard.symbol
+        copyCard.color = tempCard.color
+        copyCard.count = tempCard.count
+        copyCard.opacity = tempCard.opacity
+        copyCard.isFaceUp = tempCard.isFaceUp
+        copyCard.afterMatch = tempCard.afterMatch
+        
+        copyCard.alpha = tempCard.alpha
+        copyCard.isCopy = true
+        
+        copyCard.frame = tempCard.frame
+        copyCard.frame.origin = tempCard.frame.origin
+        copyCard.bounds = tempCard.bounds
+        
+        return copyCard
+    }
     
     override func draw(_ rect: CGRect) {
         super.draw(rect)
