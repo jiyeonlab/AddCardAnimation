@@ -10,7 +10,10 @@ import Foundation
 
 
 struct Card: CustomStringConvertible, Hashable, Equatable {
-    var description: String { return "\(suitSymbol)\(" ")\(suitColor)\(" ")\(suitCount)\(" ")\(suitOpacity)"}
+    
+    var description: String {
+        return "\(suitSymbol)\(" ")\(suitColor)\(" ")\(suitCount)\(" ")\(suitOpacity)"
+    }
     
     var isFaceUp = true
     var isMatched = false

@@ -10,26 +10,24 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var game = setCardGame()
-    var clickCount = 0
-    
-    // 사용자가 클릭한 카드를 넣어둘 배열.
-    var clickCardNumbers: Array<Int> = [Int]()
-    
-    //var moreCardOK = true
-    var waitLastHighlight = false
-    
+    // MARK: - @IBOutlet
+    @IBOutlet weak var setButtonView: UIView!
+    @IBOutlet weak var setButtonTitle: UIButton!
     @IBOutlet weak var moreCardButton: UIButton!
-    
     @IBOutlet weak var cardViewSpace: UIView!
     
-    private var identifierTag = 0
+    // MARK: - Variable
+    var game = SetCardGame()
+    var clickCount = 0
     
+    /// 사용자가 클릭한 카드를 넣어둘 배열.
+    var clickCardNumbers: Array<Int> = [Int]()
+    var waitLastHighlight = false
+    private var identifierTag = 0
     private var viewingCardList = [Int]()
     
     // 차례대로 애니메이션 적용을 위해서 타이머가 필요함.
     private var timer = Timer()
-    
     private var cardNumber = 0
     private var matchingFlag = false
     
@@ -38,9 +36,6 @@ class ViewController: UIViewController {
     lazy var cardBehavior = CardBehavior(in: animator)
     private var tempFlyCard = [UIView]()
     
-    //@IBOutlet weak var setButton: UIButton!
-    @IBOutlet weak var setButtonView: UIView!
-    @IBOutlet weak var setButtonTitle: UIButton!
     var setCount = 0
     lazy var grid = Grid(layout: .aspectRatio(0.9), frame: cardViewSpace.bounds)
     
@@ -142,10 +137,10 @@ class ViewController: UIViewController {
                                 //currentAnimatedCard.alpha = 1;
                                 currentAnimatedCard.isFaceUp = !currentAnimatedCard.isFaceUp
                                 
-                        }
+                            }
                         )
                         
-                }
+                    }
                 )
                 
                 clickCardNumbers.removeFirst()
@@ -177,7 +172,7 @@ class ViewController: UIViewController {
                             }
                         )
                         
-                }
+                    }
                 )
                 
                 cardNumber += 1
@@ -241,7 +236,7 @@ class ViewController: UIViewController {
                 //self.setButtonTitle.backgroundColor = UIColor.clear
                 self.tempFlyCard.forEach { tempCard in
                     self.cardBehavior.removeItem(tempCard)
-                }
+            }
                 
                 Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { timer in
                     
@@ -309,7 +304,7 @@ class ViewController: UIViewController {
                         cardViewSpace.subviews[$0].alpha = 0
                         //view.addSubview(copyCard)
                         copyCard.tag = 1
-                        view.insertSubview(copyCard, belowSubview: setButtonTitle)
+                        view.insertSubview(copyCard, belowSubview: setButtonView)
                         tempFlyCard.append(copyCard)
                     }
                     
@@ -421,6 +416,13 @@ class ViewController: UIViewController {
         }
     }
     
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        if UIDevice.current.orientation.isLandscape == true {
+            print("가로!")
+        }
+    }
 }
 
 extension CGFloat{

@@ -10,14 +10,41 @@ import UIKit
 
 class CardView: UIView {
     
-    var isFaceUp: Bool = false { didSet {setNeedsDisplay(); setNeedsLayout()}}
-    var afterMatch: Bool = false { didSet {setNeedsDisplay(); setNeedsLayout()}}
-    var symbol = Card.Symbol.squiggle { didSet {setNeedsDisplay()} }
-    var color = Card.Color.red { didSet {setNeedsDisplay()} }
-    var count = Card.Count.one.rawValue { didSet {setNeedsDisplay()} }
-    var opacity = Card.Opacity.solid { didSet {setNeedsDisplay()} }
+    // MARK: - Variable
+    var isFaceUp: Bool = false {
+        didSet {
+            setNeedsDisplay()
+            setNeedsLayout()
+        }
+    }
+    var afterMatch: Bool = false {
+        didSet {
+            setNeedsDisplay()
+            setNeedsLayout()
+        }
+    }
+    var symbol = Card.Symbol.squiggle {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    var color = Card.Color.red {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    var count = Card.Count.one.rawValue {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    var opacity = Card.Opacity.solid {
+        didSet {setNeedsDisplay()
+        }
+    }
     var isCopy = false
     
+    // MARK: - init Method
     init(rect: CGRect) {
         super.init(frame: rect)
         
@@ -30,7 +57,9 @@ class CardView: UIView {
         super.init(coder: coder)
     }
     
-    // 매칭된 카드 3장의 CardView를 복사해서, view에 서브뷰로 추가하기 위함.
+    // MARK: - Method
+    
+    /// 매칭된 카드 3장의 CardView를 복사해서, view에 서브뷰로 추가하기 위한 메소드.
     func tempCardDraw(draw tempCard: CardView) -> CardView {
         
         let copyCard = CardView(rect: tempCard.bounds)
@@ -98,7 +127,6 @@ class CardView: UIView {
             drawStriped(draw: path, stripe: color)
             
         }
-        
     }
     
     private func drawSquiggle(number count: Int) -> UIBezierPath {
@@ -118,9 +146,7 @@ class CardView: UIView {
             squigglePath.addLine(to: CGPoint(x: startPoint, y: bounds.maxY-yOffset))
             squigglePath.addCurve(to: CGPoint(x: startPoint, y: bounds.midY), controlPoint1: CGPoint(x: startPoint + (symbolWidth/3.0), y: bounds.midY + (yOffset/2)), controlPoint2: CGPoint(x: startPoint + (symbolWidth/3.0), y: bounds.midY + (yOffset/2)))
             squigglePath.addCurve(to: CGPoint(x:startPoint, y:yOffset), controlPoint1: CGPoint(x: startPoint - (symbolWidth/3.0), y: yOffset + (yOffset / 2.0)), controlPoint2: CGPoint(x: startPoint - (symbolWidth/3.0), y: yOffset + (yOffset / 2.0)))
-            
-            //startPoint = drawingBoxOriginX + ((symbolWidth + betweenMargin) * CGFloat(i) )
-            
+           
             if i == 0 {
                 startPoint = drawingBoxOriginX + symbolWidth + betweenMargin
             }else if i == 1{
@@ -133,8 +159,6 @@ class CardView: UIView {
     }
     
     private func drawDiamond(number count: Int) -> UIBezierPath {
-        
-        //print("count : \(count+1), color : \(color)")
         let diamondPath = UIBezierPath()
         let allDiamondWidth = ( symbolWidth * CGFloat(count + 1) )
         let drawingBoxOriginX = (bounds.width - allDiamondWidth) / 2
@@ -159,8 +183,6 @@ class CardView: UIView {
     }
     
     private func drawOval(number count: Int) -> UIBezierPath {
-        
-        //print("count : \(count+1), color : \(color)")
         
         let allOvalWidth = ( symbolWidth * CGFloat(count + 1) )
         let drawingBoxOriginX = (bounds.width - allOvalWidth) / 2

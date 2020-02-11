@@ -8,11 +8,15 @@
 
 import Foundation
 
-struct setCardGame {
+struct SetCardGame {
     
-    // 총 81장의 카드가 들어있음.
+    /// 전체 카드셋이 들어있는 배열. (총 81장)
     var cardDeck: Array<Card> = [Card]()
+    
+    /// 현재 화면에 보여지는 카드가 들어있는 배열
     var viewCards: Array<Card> = [Card]()
+    
+    /// 사용자가 선택한 카드가 들어있는 배열
     var checkCards: Array<Card> = [Card]()
     var matchingOK = false
     var deckHasMoreCard = true
@@ -22,6 +26,7 @@ struct setCardGame {
         createCardDeck()
     } // init
     
+    /// 게임에 필요한 총 81장의 카드셋을 만드는 초기화 작업
     mutating func createCardDeck() {
         
         viewCards = []
@@ -40,16 +45,16 @@ struct setCardGame {
         createFirstViewCards()
     }
     
-    // 맨 처음에 보여줄 12장 카드배열 생성. 1번만 실행.
+    /// 맨 처음에 보여줄 12장 카드배열을 생성하는 메소드. 초기 1번만 실행됨.
     mutating func createFirstViewCards() {
         for _ in 0..<12 {
             let rand = cardDeck.count.arc4random
             viewCards.append(cardDeck[rand])
             cardDeck.remove(at: rand)
-            //print("cardDack에 남은 갯수 => \(cardDeck.count)")
         }
     }
     
+    /// "more card" 버튼을 눌러, 3장의 카드를 더 보여줄 때 실행되는 메소드.
     mutating func moreCardAppend(){
         
         // deck에 남은 카드가 3장 이상 일 때만 가능.
@@ -58,15 +63,11 @@ struct setCardGame {
                 let rand = cardDeck.count.arc4random
                 viewCards.append(cardDeck[rand])
                 cardDeck.remove(at: rand)
-                //print("cardDack에 남은 갯수 => \(cardDeck.count)")
             }
             deckHasMoreCard = true
             
             score -= 1
             
-//            if cardDeck.count == 3{
-//                print("마지막 3장 남음")
-//            }
             if cardDeck.count == 0 {
                 deckHasMoreCard = false
             }
@@ -74,14 +75,14 @@ struct setCardGame {
         
     }
     
-    // view에서 선택한 카드 3장이 matching인지 아닌지를 판단.
+    /// view에서 선택한 카드 3장이 matching인지 아닌지를 판단하는 메소드
     mutating func checkMatching(at clickNum: Array<Int>) -> Bool {
      
         for index in 0..<3 {
             checkCards.append(viewCards[clickNum[index]])
         }
         
-        // 카드 3장의 property가 모두 다르거나 모두 같아야 함.
+        // 카드 3장의 property가 모두 다르거나 모두 같아야 매칭이기 때문에 중복을 허락하지 않는 Set에 넣어서 판단하기.
         let checkSymbol: Set = [checkCards[0].suitSymbol.rawValue, checkCards[1].suitSymbol.rawValue, checkCards[2].suitSymbol.rawValue]
         let checkColor: Set = [checkCards[0].suitColor.rawValue, checkCards[1].suitColor.rawValue, checkCards[2].suitColor.rawValue]
         let checkCount: Set = [checkCards[0].suitCount.rawValue, checkCards[1].suitCount.rawValue, checkCards[2].suitCount.rawValue]
